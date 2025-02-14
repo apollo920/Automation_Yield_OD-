@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"github.com/gofiber/fiber/v2"
 	"os"
