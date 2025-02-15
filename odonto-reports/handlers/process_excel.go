@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"strconv"
 	"fmt"
 	"log"
 	"github.com/xuri/excelize/v2"
@@ -25,36 +26,94 @@ type PilarData struct {
 
 // Função para processar o Excel
 func ProcessExcel(filePath string) (*ReportData, error) {
-	// Abre o arquivo Excel
-	f, err := excelize.OpenFile(filePath)
-	if err != nil {
-		log.Println("Erro ao abrir o arquivo Excel:", err)
-		return nil, err
-	}
-	defer f.Close()
+    log.Println("Abrindo o arquivo Excel:", filePath)
+
+    // Tenta abrir o arquivo
+    f, err := excelize.OpenFile(filePath)
+    if err != nil {
+        log.Println("Erro ao abrir o arquivo Excel:", err)
+        return nil, fmt.Errorf("erro ao abrir o arquivo Excel: %v", err)
+    }
+    defer f.Close()
+
+	// Supondo que "f" seja seu arquivo Excel (workbook)
+	sheets := f.GetSheetList()
+	log.Println("Planilhas encontradas:", sheets)
+
+
+	
+
+
+    log.Println("Arquivo Excel aberto com sucesso!")
 
 	// -------- Ler os dados da aba "DIAS_TRABALHO" --------
-	diasUteis, err := f.GetCellValue("DIAS_TRABALHO", "C2")
-	diasCorridos, err := f.GetCellValue("DIAS_TRABALHO", "C3")
-	diasFaltam, err := f.GetCellValue("DIAS_TRABALHO", "C4")
+	diasUteis, err := f.GetCellValue("DIAS_TRABALHO", "A2")
+if err != nil {
+    log.Fatalf("Erro ao ler A2: %v", err)
+}
+if diasUteis == "" {
+    log.Fatal("A célula A2 está vazia!")
+}
 
-	if err != nil {
-		log.Println("Erro ao ler os dados de DIAS_TRABALHO:", err)
-		return nil, err
-	}
+diasCorridos, err := f.GetCellValue("DIAS_TRABALHO", "B2")
+if err != nil {
+    log.Fatalf("Erro ao ler B2: %v", err)
+}
+if diasCorridos == "" {
+    log.Fatal("A célula B2 está vazia!")
+}
+
+diasFaltam, err := f.GetCellValue("DIAS_TRABALHO", "C2")
+if err != nil {
+    log.Fatalf("Erro ao ler C2: %v", err)
+}
+if diasFaltam == "" {
+    log.Fatal("A célula C2 está vazia!")
+}
+
+log.Println("Valores lidos:", diasUteis, diasCorridos, diasFaltam)
 
 	diasCorridosInt, err := strconv.Atoi(diasCorridos)
 	if err != nil {
-    return fmt.Errorf("erro ao converter diasCorridos: %v", err)
+		return nil, fmt.Errorf("erro ao retornar diasCorridos")
+
+
 }
 
 	diasUteisInt, err := strconv.Atoi(diasUteis)
 	if err != nil {
-	return fmt.Errorf("erro ao converter diasUteis: %v", err)
+		return nil, fmt.Errorf("erro ao retornar diasUteis")
+
+
+}
+
+	diasFaltamInt, err := strconv.Atoi(diasFaltam)
+	if err != nil {
+	    return nil, fmt.Errorf("erro ao converter diasFaltam: %v", err)
 }
 
 	// -------- Ler os dados da aba "CONTROLE" --------
 	rows, err := f.GetRows("CONTROLE")
+
+if err != nil {
+    log.Fatalf("Erro ao obter as linhas da aba CONTROLE: %v", err)
+}
+log.Printf("Total de linhas na aba CONTROLE: %d", len(rows))
+
+for i, row := range rows {
+    log.Printf("Linha %d tem %d colunas: %+v", i, len(row), row)
+}
+	// Verifique se há linhas antes de acessá-las
+	if len(rows) == 0 {
+    log.Println("Erro: Nenhuma linha encontrada no arquivo Excel")
+    return nil, fmt.Errorf("o arquivo Excel não contém dados")
+}
+
+	if len(rows[0]) < 2 { // Supondo que cada linha deve ter pelo menos 2 colunas
+    log.Println("Erro: O arquivo Excel não tem colunas suficientes")
+    return nil, fmt.Errorf("o arquivo Excel não contém colunas suficientes")
+}
+
 	if err != nil {
 		log.Println("Erro ao ler a aba CONTROLE:", err)
 		return nil, err
@@ -91,9 +150,9 @@ func ProcessExcel(filePath string) (*ReportData, error) {
 
 	// Retornar os dados extraídos
 	return &ReportData{
-		DiasUteis:    int(diasUteis),
-		DiasCorridos: int(diasCorridos),
-		DiasFaltam:   int(diasFaltam),
+		DiasUteis:    diasUteisInt,
+		DiasCorridos: diasCorridosInt,
+		DiasFaltam:   diasFaltamInt,
 		Pilares:      pilares,
 	}, nil
 }

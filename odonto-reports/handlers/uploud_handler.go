@@ -42,6 +42,7 @@ func UploadExcelHandler(c *fiber.Ctx) error {
 		})
 	}
 
+
 	// Retornar os dados extraídos
 	return c.JSON(fiber.Map{
 		"message":     "Arquivo processado com sucesso",
