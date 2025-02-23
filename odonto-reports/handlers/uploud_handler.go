@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"log"
 	"github.com/gofiber/fiber/v2"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -42,13 +42,13 @@ func UploadExcelHandler(c *fiber.Ctx) error {
 		})
 	}
 
-
 	// Retornar os dados extraídos
 	return c.JSON(fiber.Map{
-		"message":     "Arquivo processado com sucesso",
-		"dias_uteis":  reportData.DiasUteis,
+		"message":       "Arquivo processado com sucesso",
+		"dias_uteis":    reportData.DiasUteis,
 		"dias_corridos": reportData.DiasCorridos,
-		"dias_faltam": reportData.DiasFaltam,
-		"pilares":     reportData.Pilares,
+		"dias_faltam":   reportData.DiasFaltam,
+		"pilares":       reportData.Pilares,
 	})
+
 }

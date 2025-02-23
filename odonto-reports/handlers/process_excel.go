@@ -1,10 +1,15 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/xuri/excelize/v2"
 	"log"
+	"net/http"
+	"odonto-reports/models"
+	"odonto-reports/services"
 	"strconv"
+	"sync"
 )
 
 // Estrutura para armazenar os dados extraídos
@@ -158,4 +163,31 @@ func parseFloat(value string) (float64, error) {
 	var num float64
 	_, err := fmt.Sscanf(value, "%f", &num)
 	return num, err
+}
+
+var (
+	relatorioGerado models.Relatorio // Armazena os dados processados
+	mu              sync.Mutex       // Mutex para evitar concorrência
+)
+
+// Processa o Excel e salva os dados globalmente
+func ProcessExcelHandler(w http.ResponseWriter, r *http.Request) {
+	dadosProcessados, err := services.ProcessarExcel()
+	if err != nil {
+		http.Error(w, "Erro ao processar o Excel", http.StatusInternalServerError)
+		return
+	}
+
+	// Salvar os dados no cache global
+	mu.Lock()
+	relatorioGerado = dadosProcessados
+	mu.Unlock()
+
+	// Retorna os dados processados
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Arquivo processado com sucesso",
+		"data":    dadosProcessados,
+	})
 }
