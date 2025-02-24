@@ -1,27 +1,27 @@
 package handlers
 
 import (
-	"encoding/json"
-	"net/http"
+	"github.com/gofiber/fiber/v2"
 	"odonto-reports/services"
 )
 
-// Retorna um relatório formatado com base nos dados processados
-func GerarRelatorioHandler(w http.ResponseWriter, r *http.Request) {
+// Gera o relatório a partir dos dados processados
+func GerarRelatorioHandler(c *fiber.Ctx) error {
 	mu.Lock()
 	defer mu.Unlock()
 
 	// Verifica se há dados processados
 	if relatorioGerado.DiasUteis == 0 {
-		http.Error(w, "Nenhum dado processado ainda", http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Nenhum dado processado ainda",
+		})
 	}
 
 	// Gera o relatório
 	relatorio := services.GerarRelatorio(relatorioGerado)
 
 	// Retorna o relatório
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"relatorio": relatorio})
+	return c.JSON(fiber.Map{
+		"relatorio": relatorio,
+	})
 }

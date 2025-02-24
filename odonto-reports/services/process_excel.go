@@ -17,8 +17,8 @@ func ProcessarExcel() (models.Relatorio, error) {
 	defer file.Close()
 
 	// Lendo os dias úteis, corridos e restantes
-	diasUteis, _ := lerCelulaComoInt(file, "DIAS_TRABALHO", "C5")
-	diasCorridos, _ := lerCelulaComoInt(file, "DIAS_TRABALHO", "C4")
+	diasUteis, _ := lerCelulaComoInt(file, "DIAS_TRABALHO", "A2")
+	diasCorridos, _ := lerCelulaComoInt(file, "DIAS_TRABALHO", "B2")
 	diasFaltam := diasUteis - diasCorridos
 
 	// Lendo os valores da aba CONTROLE
@@ -70,6 +70,7 @@ func ProcessarExcel() (models.Relatorio, error) {
 		DiasUteis:    diasUteis,
 		Pilares:      pilares,
 	}, nil
+
 }
 
 // Função auxiliar para ler valores inteiros de células

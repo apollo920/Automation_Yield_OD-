@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"log"
 	"os"
-	"path/filepath"
+	"fmt"
 )
 
-// UploadExcelHandler recebe o arquivo Excel e o processa
+// UploadExcelHandler recebe o arquivo Excel e o armazena temporariamente
 func UploadExcelHandler(c *fiber.Ctx) error {
+	
 	// Obtém o arquivo enviado
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -17,38 +17,17 @@ func UploadExcelHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// Define o caminho para salvar o arquivo temporariamente
-	savePath := filepath.Join("uploads", file.Filename)
-
-	// Cria o diretório de uploads se não existir
+	// Criando diretório se não existir
 	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
 		os.Mkdir("uploads", os.ModePerm)
 	}
 
-	// Salva o arquivo no servidor
-	err = c.SaveFile(file, savePath)
+	// Salvando o arquivo no diretório uploads
+	filePath := fmt.Sprintf("uploads/%s", file.Filename)
+	err = c.SaveFile(file, filePath)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Falha ao salvar o arquivo",
-		})
+		return c.Status(500).JSON(fiber.Map{"error": "Erro ao salvar arquivo"})
 	}
 
-	// Processar o Excel após o upload
-	reportData, err := ProcessExcel(savePath)
-	if err != nil {
-		log.Println("Erro ao processar o arquivo Excel:", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Erro ao processar o arquivo Excel",
-		})
-	}
-
-	// Retornar os dados extraídos
-	return c.JSON(fiber.Map{
-		"message":       "Arquivo processado com sucesso",
-		"dias_uteis":    reportData.DiasUteis,
-		"dias_corridos": reportData.DiasCorridos,
-		"dias_faltam":   reportData.DiasFaltam,
-		"pilares":       reportData.Pilares,
-	})
-
+	return c.JSON(fiber.Map{"message": "Arquivo enviado com sucesso!"})
 }

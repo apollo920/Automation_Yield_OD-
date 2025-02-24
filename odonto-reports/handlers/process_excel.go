@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/xuri/excelize/v2"
+	"github.com/gofiber/fiber/v2"
 	"log"
-	"net/http"
 	"odonto-reports/models"
 	"odonto-reports/services"
-	"strconv"
 	"sync"
 )
 
@@ -29,7 +27,7 @@ type PilarData struct {
 	PercentProj float64
 }
 
-// Função para processar o Excel
+// Função para receber e verificar arquivo excel
 func ProcessExcel(filePath string) (*ReportData, error) {
 	log.Println("Abrindo o arquivo Excel:", filePath)
 
@@ -73,23 +71,6 @@ func ProcessExcel(filePath string) (*ReportData, error) {
 
 	log.Println("Valores lidos:", diasUteis, diasCorridos, diasFaltam)
 
-	diasCorridosInt, err := strconv.Atoi(diasCorridos)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao retornar diasCorridos")
-
-	}
-
-	diasUteisInt, err := strconv.Atoi(diasUteis)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao retornar diasUteis")
-
-	}
-
-	diasFaltamInt, err := strconv.Atoi(diasFaltam)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao converter diasFaltam: %v", err)
-	}
-
 	// -------- Ler os dados da aba "CONTROLE" --------
 	rows, err := f.GetRows("CONTROLE")
 
@@ -117,42 +98,7 @@ func ProcessExcel(filePath string) (*ReportData, error) {
 		return nil, err
 	}
 
-	// Criar mapa para armazenar os dados dos pilares
-	pilares := make(map[string]PilarData)
-
-	// Percorrer as linhas (começando da linha 2 para ignorar cabeçalhos)
-	for i := 1; i < len(rows); i++ {
-		pilar := rows[i][0] // Nome do Pilar (ex: ORTO, CREDIARIO, etc.)
-
-		real, _ := parseFloat(rows[i][1]) // Coluna "Real"
-		meta, _ := parseFloat(rows[i][2]) // Coluna "Meta"
-
-		// Cálculo de Percentual Real/Meta
-		percentReal := (real / meta) * 100
-
-		// Cálculo da Projeção
-		projecao := (real / float64(diasCorridosInt)) * float64(diasUteisInt)
-
-		// Cálculo de Percentual Projeção/Meta
-		percentProj := (projecao / meta) * 100
-
-		// Adicionar ao mapa
-		pilares[pilar] = PilarData{
-			Real:        real,
-			Meta:        meta,
-			PercentReal: percentReal,
-			Projecao:    projecao,
-			PercentProj: percentProj,
-		}
-	}
-
-	// Retornar os dados extraídos
-	return &ReportData{
-		DiasUteis:    diasUteisInt,
-		DiasCorridos: diasCorridosInt,
-		DiasFaltam:   diasFaltamInt,
-		Pilares:      pilares,
-	}, nil
+	return nil, fmt.Errorf("Arquivo Verificado Com Sucesso: %v", err)
 }
 
 // Função auxiliar para converter string em float
@@ -170,12 +116,13 @@ var (
 	mu              sync.Mutex       // Mutex para evitar concorrência
 )
 
-// Processa o Excel e salva os dados globalmente
-func ProcessExcelHandler(w http.ResponseWriter, r *http.Request) {
+// Processa o Excel e armazena os dados processados
+func ProcessExcelHandler(c *fiber.Ctx) error {
 	dadosProcessados, err := services.ProcessarExcel()
 	if err != nil {
-		http.Error(w, "Erro ao processar o Excel", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Erro ao processar o Excel",
+		})
 	}
 
 	// Salvar os dados no cache global
@@ -184,9 +131,7 @@ func ProcessExcelHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Unlock()
 
 	// Retorna os dados processados
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	return c.JSON(fiber.Map{
 		"message": "Arquivo processado com sucesso",
 		"data":    dadosProcessados,
 	})

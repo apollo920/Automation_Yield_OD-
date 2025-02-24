@@ -14,16 +14,11 @@ func main() {
 	app.Post("/upload", handlers.UploadExcelHandler)
 
 	// Rota para processar o Excel
-	app.Post("/process_excel", func(c *fiber.Ctx) error {
-		handlers.ProcessExcelHandler(c.Context().Response().BodyWriter(), c.Context().Request())
-		return nil
-	})
+	app.Post("/process_excel", handlers.ProcessExcelHandler)
 
 	// Rota para gerar o relatório automaticamente
-	app.Get("/gerar_relatorio", func(c *fiber.Ctx) error {
-		handlers.GerarRelatorioHandler(c.Context().Response().BodyWriter(), c.Context().Request())
-		return nil
-	})
+	app.Get("/gerar_relatorio", handlers.GerarRelatorioHandler)
 
 	log.Fatal(app.Listen(":3000"))
 }
+
