@@ -20,6 +20,14 @@ func GerarRelatorioHandler(c *fiber.Ctx) error {
 	// Gera o relatório
 	relatorio := services.GerarRelatorio(relatorioGerado)
 
+	// Envia o relatório por e-mail
+	err := services.EnviarEmail(relatorio)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Erro ao enviar relatório por e-mail",
+		})
+	}
+
 	// Retorna o relatório
 	return c.JSON(fiber.Map{
 		"relatorio": relatorio,

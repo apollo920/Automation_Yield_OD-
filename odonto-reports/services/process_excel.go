@@ -5,7 +5,8 @@ import (
 	"github.com/xuri/excelize/v2"
 	"odonto-reports/models"
 	"strconv"
-	"math"
+	"log"
+
 )
 
 // Processa o arquivo Excel e retorna os dados estruturados
@@ -36,28 +37,46 @@ func ProcessarExcel(filepath string) (models.Relatorio, error) {
 		return models.Relatorio{}, fmt.Errorf("erro ao ler a aba CONTROLE: %v", err)
 	}
 
+	// Log para depuração
+	log.Println("Linhas lidas da aba CONTROLE:")
+	for i, linha := range linhas {
+		log.Printf("Linha %d: %v", i, linha)
+	}	
+
 	for _, linha := range linhas[1:] { // Pulando o cabeçalho
 		if len(linha) < 5 {
 			continue
 		}
 	
 		nomePilar := linha[0]
-		real, _ := strconv.ParseFloat(linha[1], 64)
-		meta, _ := strconv.ParseFloat(linha[2], 64)
+		realStr := linha[1]
+		metaStr := linha[2]
 	
-		// Verifica se meta é zero para evitar divisão por zero
+		// Log para depuração
+		log.Printf("Processando linha: Nome=%s, Real=%s, Meta=%s", nomePilar, realStr, metaStr)
+	
+		// Converte os valores para float64
+		real, err := strconv.ParseFloat(realStr, 64)
+		if err != nil {
+			log.Printf("Erro ao converter Real (%s) para float64: %v", realStr, err)
+			real = 0
+		}
+	
+		meta, err := strconv.ParseFloat(metaStr, 64)
+		if err != nil {
+			log.Printf("Erro ao converter Meta (%s) para float64: %v", metaStr, err)
+			meta = 0
+		}
+	
+		// Cálculos
 		var percentReal, projecao, percentProj float64
 		if meta != 0 {
 			percentReal = (real / meta) * 100
 			projecao = (real / float64(diasCorridos)) * float64(diasUteis)
 			percentProj = (projecao / meta) * 100
-		} else {
-			// Define valores padrão ou trata o caso de meta zero
-			percentReal = 0
-			projecao = 0
-			percentProj = 0
 		}
 	
+		// Adiciona os dados ao mapa de pilares
 		pilares[nomePilar] = struct {
 			Real        float64
 			Meta        float64
@@ -65,11 +84,11 @@ func ProcessarExcel(filepath string) (models.Relatorio, error) {
 			Projecao    float64
 			PercentProj float64
 		}{
-			Real:        replaceNaNInf(real),
-			Meta:        replaceNaNInf(meta),
-			PercentReal: replaceNaNInf(percentReal),
-			Projecao:    replaceNaNInf(projecao),
-			PercentProj: replaceNaNInf(percentProj),
+			Real:        real,
+			Meta:        meta,
+			PercentReal: percentReal,
+			Projecao:    projecao,
+			PercentProj: percentProj,
 		}
 	}
 
@@ -82,14 +101,6 @@ func ProcessarExcel(filepath string) (models.Relatorio, error) {
 	}, nil
 
 }
-
-func replaceNaNInf(value float64) float64 {
-	if math.IsNaN(value) || math.IsInf(value, 0) {
-		return 0
-	}
-	return value
-}
-
 // Função auxiliar para ler valores inteiros de células
 func lerCelulaComoInt(file *excelize.File, aba string, celula string) (int, error) {
 	valor, err := file.GetCellValue(aba, celula)
