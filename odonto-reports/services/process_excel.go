@@ -5,12 +5,13 @@ import (
 	"github.com/xuri/excelize/v2"
 	"odonto-reports/models"
 	"strconv"
+	"math"
 )
 
 // Processa o arquivo Excel e retorna os dados estruturados
-func ProcessarExcel() (models.Relatorio, error) {
+func ProcessarExcel(filepath string) (models.Relatorio, error) {
 	// Abrindo o arquivo Excel
-	file, err := excelize.OpenFile("uploads/relatorio.xlsx")
+	file, err := excelize.OpenFile(filepath)
 	if err != nil {
 		return models.Relatorio{}, fmt.Errorf("erro ao abrir o arquivo Excel: %v", err)
 	}
@@ -39,15 +40,24 @@ func ProcessarExcel() (models.Relatorio, error) {
 		if len(linha) < 5 {
 			continue
 		}
-
+	
 		nomePilar := linha[0]
 		real, _ := strconv.ParseFloat(linha[1], 64)
 		meta, _ := strconv.ParseFloat(linha[2], 64)
-
-		percentReal := (real / meta) * 100
-		projecao := (real / float64(diasCorridos)) * float64(diasUteis)
-		percentProj := (projecao / meta) * 100
-
+	
+		// Verifica se meta é zero para evitar divisão por zero
+		var percentReal, projecao, percentProj float64
+		if meta != 0 {
+			percentReal = (real / meta) * 100
+			projecao = (real / float64(diasCorridos)) * float64(diasUteis)
+			percentProj = (projecao / meta) * 100
+		} else {
+			// Define valores padrão ou trata o caso de meta zero
+			percentReal = 0
+			projecao = 0
+			percentProj = 0
+		}
+	
 		pilares[nomePilar] = struct {
 			Real        float64
 			Meta        float64
@@ -55,11 +65,11 @@ func ProcessarExcel() (models.Relatorio, error) {
 			Projecao    float64
 			PercentProj float64
 		}{
-			Real:        real,
-			Meta:        meta,
-			PercentReal: percentReal,
-			Projecao:    projecao,
-			PercentProj: percentProj,
+			Real:        replaceNaNInf(real),
+			Meta:        replaceNaNInf(meta),
+			PercentReal: replaceNaNInf(percentReal),
+			Projecao:    replaceNaNInf(projecao),
+			PercentProj: replaceNaNInf(percentProj),
 		}
 	}
 
@@ -71,6 +81,13 @@ func ProcessarExcel() (models.Relatorio, error) {
 		Pilares:      pilares,
 	}, nil
 
+}
+
+func replaceNaNInf(value float64) float64 {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0
+	}
+	return value
 }
 
 // Função auxiliar para ler valores inteiros de células

@@ -3,12 +3,11 @@ package handlers
 import (
 	"github.com/gofiber/fiber/v2"
 	"os"
-	"fmt"
 )
 
 // UploadExcelHandler recebe o arquivo Excel e o armazena temporariamente
 func UploadExcelHandler(c *fiber.Ctx) error {
-	
+
 	// Obtém o arquivo enviado
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -22,8 +21,8 @@ func UploadExcelHandler(c *fiber.Ctx) error {
 		os.Mkdir("uploads", os.ModePerm)
 	}
 
-	// Salvando o arquivo no diretório uploads
-	filePath := fmt.Sprintf("uploads/%s", file.Filename)
+	// Salvando o arquivo com um nome fixo
+	filePath := "uploads/relatorio.xlsx"
 	err = c.SaveFile(file, filePath)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Erro ao salvar arquivo"})

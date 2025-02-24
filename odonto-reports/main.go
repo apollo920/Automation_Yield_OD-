@@ -19,6 +19,7 @@ func main() {
 	// Rota para gerar o relatório automaticamente
 	app.Get("/gerar_relatorio", handlers.GerarRelatorioHandler)
 
+	log.Println("Servidor iniciado na porta 3000")
 	log.Fatal(app.Listen(":3000"))
 }
 

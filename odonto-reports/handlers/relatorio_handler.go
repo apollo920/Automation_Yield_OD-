@@ -11,7 +11,7 @@ func GerarRelatorioHandler(c *fiber.Ctx) error {
 	defer mu.Unlock()
 
 	// Verifica se há dados processados
-	if relatorioGerado.DiasUteis == 0 {
+	if relatorioGerado.Pilares == nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Nenhum dado processado ainda",
 		})
