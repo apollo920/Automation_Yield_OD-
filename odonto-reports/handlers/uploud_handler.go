@@ -27,6 +27,7 @@ func UploadExcelHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Erro ao salvar arquivo"})
 	}
+	
 
 	return c.JSON(fiber.Map{"message": "Arquivo enviado com sucesso!"})
 }
