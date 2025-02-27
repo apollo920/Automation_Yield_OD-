@@ -16,6 +16,7 @@ type ReportData struct {
 	Pilares      map[string]PilarData
 }
 
+
 // Estrutura para armazenar os dados de cada Pilar
 type PilarData struct {
 	Real        float64
