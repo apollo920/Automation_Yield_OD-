@@ -76,6 +76,7 @@ func ProcessarExcel(filepath string) (models.Relatorio, error) {
 			percentProj = (projecao / meta) * 100
 		}
 	
+		
 		// Adiciona os dados ao mapa de pilares
 		pilares[nomePilar] = struct {
 			Real        float64
